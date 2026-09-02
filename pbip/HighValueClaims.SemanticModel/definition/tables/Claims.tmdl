@@ -1,6 +1,43 @@
 table Claims
 	lineageTag: 4e21d56b-2d1e-4989-be28-eb5767e1dd44
 
+	measure 'Total Claim Amount' = SUM(Claims[ClaimAmount])
+		formatString: $#,0.00;($#,0.00);$#,0.00
+		lineageTag: b380e48d-a53e-4784-8664-1103f9c86ef2
+
+	measure 'High Value Claim Amount' =
+			CALCULATE(
+				SUM(Claims[ClaimAmount]),
+				Claims[ClaimAmount] > 500000
+			)
+		formatString: $#,0.00;($#,0.00);$#,0.00
+		lineageTag: 90788c93-e040-43d5-ade1-2eba082c5725
+
+	measure 'High Value Claim Count' =
+			CALCULATE(
+				COUNTROWS(Claims),
+				Claims[ClaimAmount] > 500000
+			)
+		formatString: 0
+		lineageTag: ca805abd-e8af-486a-a505-18b760ca2738
+
+	measure 'High Value Claim Ratio' =
+			DIVIDE(
+				[High Value Claim Amount],
+				[Total Claim Amount],
+				0
+			)
+		formatString: 0.0%
+		lineageTag: 3a856e77-2622-4951-81e1-fd3a14400558
+
+	measure 'Average High Value Claim' =
+			CALCULATE(
+				AVERAGE(Claims[ClaimAmount]),
+				Claims[ClaimAmount] > 500000
+			)
+		formatString: $#,0.00;($#,0.00);$#,0.00
+		lineageTag: 248a7ace-803d-419f-9fd6-be04748393ef
+
 	column ClaimID
 		dataType: string
 		lineageTag: 10673151-45fd-4ee4-aeb0-4e7f433cc7b9
@@ -58,48 +95,17 @@ table Claims
 
 		annotation SummarizationSetBy = Automatic
 
-	measure Total Claim Amount =
-		SUM(Claims[ClaimAmount])
-		formatString: "$#,0.00;($#,0.00);$#,0.00"
-
-	measure High Value Claim Amount =
-		CALCULATE(
-			SUM(Claims[ClaimAmount]),
-			Claims[ClaimAmount] > 500000
-		)
-		formatString: "$#,0.00;($#,0.00);$#,0.00"
-
-	measure High Value Claim Count =
-		CALCULATE(
-			COUNTROWS(Claims),
-			Claims[ClaimAmount] > 500000
-		)
-		formatString: "0"
-
-	measure High Value Claim Ratio =
-		DIVIDE(
-			[High Value Claim Amount],
-			[Total Claim Amount],
-			0
-		)
-		formatString: "0.0%"
-
-	measure Average High Value Claim =
-		CALCULATE(
-			AVERAGE(Claims[ClaimAmount]),
-			Claims[ClaimAmount] > 500000
-		)
-		formatString: "$#,0.00;($#,0.00);$#,0.00"
-
 	partition Claims = m
 		mode: import
 		source =
 				let
-				    Source = Csv.Document(File.Contents("C:\Users\User\_WORKSPACES\Training\PowerBI MCP\data\Claims.csv"),[Delimiter=",", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    Source = Csv.Document(File.Contents("C:\Users\31386\Downloads\PowerBI-MCP\data\Claims.csv"),[Delimiter=",", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.None]),
 				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"ClaimID", type text}, {"ClaimDate", type date}, {"RegionName", type text}, {"ProductName", type text}, {"ClaimType", type text}, {"ClaimAmount", Int64.Type}})
 				in
 				    #"Changed Type"
 
 	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
 
